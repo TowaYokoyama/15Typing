@@ -1,8 +1,10 @@
 import { useState } from "react";
 import StartScreen from "./components/StartScreen";
 
+
 import ResultScreen from "./components/Resultscreen";
 import GameScreen from "./components/gameScreen";
+
 
 
 type GameStatus = 'start' | 'playing' | 'results';

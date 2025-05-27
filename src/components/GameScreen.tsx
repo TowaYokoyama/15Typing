@@ -15,7 +15,7 @@ export default function GameScreen({ onGameEnd }: Props) {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [userInput, setUserInput] = useState(""); //ユーザーが入力したテキスト
   const [score, setScore] = useState(0); // スコア　正しくタイピングできたかどうかのカウント
-  const [input,setInput] = useState("");
+  //const [input,setInput] = useState("");
 
   const mockQuotes = [
     { content: "The quick brown fox jumps over the lazy dog.", author: "Typing Proverb" },
@@ -60,10 +60,10 @@ export default function GameScreen({ onGameEnd }: Props) {
 
   const progressPercent = (timeLeft / totalTime) * 100;
 
-  const renderQuote = () => {
+ {/* const renderQuote = () => {
     if (!quote) return null;
 
-  }
+  }*/}
 
   return (
     <div className="flex flex-col h-screen">
