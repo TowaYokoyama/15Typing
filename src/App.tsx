@@ -2,8 +2,8 @@ import { useState } from "react";
 import StartScreen from "./components/StartScreen";
 
 
-import ResultScreen from "./components/Resultscreen";
-import GameScreen from "./components/gameScreen";
+import ResultScreen from "./components/ResultScreen";
+import GameScreen from "./components/GameScreen";
 
 
 
