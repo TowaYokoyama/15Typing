@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, PartyPopper, Target, Trophy, XCircle } from "lucide-react";
+import { CheckCircle, Crown, PartyPopper, Target, Trophy, XCircle } from "lucide-react";
+import { auth, db } from "../firebase"; // ルート構造に合わせて調整
+import { addDoc, collection, getDocs, limit, orderBy, query, serverTimestamp } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 type Props = {
   onRestart: () => void;
@@ -21,6 +24,8 @@ export default function GameScreen({onRestart}:Props) {
   const [missCount, setMissCount] = useState(0);
   const [missFlash, setMissFlash] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [username,setUsername] = useState('ゲスト')
+  const [topScores, setTopScores] = useState<{ username: string; score: number; accuracy:number }[]>([]);
 
   const typeSoundRef = useRef<HTMLAudioElement | null>(null);
   const missSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -79,8 +84,9 @@ export default function GameScreen({onRestart}:Props) {
     setTimeout(() => setMissFlash(false), 200);
   };
 
+  //スコア判定
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       if (!quote || e.isComposing || e.key === "Process") return;
       if (userInput.length >= quote.content.length) return;
 
@@ -112,8 +118,58 @@ export default function GameScreen({onRestart}:Props) {
 
   const progressPercent = (timeLeft / totalTime) * 100;
 
-  if (isGameOver) {
-    return (
+useEffect(() => {
+  if (!isGameOver) return;
+
+  const saveAndFetchScores = async () => {
+    try {
+      // スコアを保存
+      await addDoc(collection(db, "scores"), {
+        username: username ,
+        score: finalScore,
+        accuracy,
+        correctCount,
+        missCount,
+        createdAt: serverTimestamp(),
+      });
+
+      // 保存後にランキングを取得
+      const q = query(
+        collection(db, "scores"),
+        orderBy("score", "desc"),
+        limit(5)
+      );
+      const querySnapShot = await getDocs(q);
+      const scores = querySnapShot.docs.map((doc) => doc.data()) as {
+        username: string;
+        score: number;
+        accuracy: number;
+      }[];
+      setTopScores(scores);
+    } catch (err) {
+      console.error("スコア保存または取得エラー", err);
+    }
+  };
+
+  saveAndFetchScores();
+}, [isGameOver]);
+  
+
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // ログイン済み → 表示名 or メールを使う
+      setUsername(user.displayName ||  "匿名ユーザー");
+    } else {
+      // 未ログイン → ゲスト
+      setUsername("ゲスト");
+    }
+  });
+
+  return () => unsubscribe();
+}, []);
+
+  return isGameOver ?( 
       <motion.div
         className="flex flex-col items-center justify-center h-screen bg-[#1a1c20] text-white text-center"
        
@@ -121,10 +177,24 @@ export default function GameScreen({onRestart}:Props) {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6 }}
       >
-        <h2 className="text-4xl font-bold mb-4 flex items-center gap-2">
+        <h2 className="text-4xl font-bold mb-4 flex items-center gap-2 text-">
   <PartyPopper className="w-8 h-8 text-pink-400" />
   結果
 </h2>
+<h3><Crown />
+  </h3>
+  <ul className="text-left max-auto w-full max-w-sm">
+    {topScores.map((entry, index)=> (
+      <li key={index} className="flex justify-between py-1 border-b border-white/10">
+        <span className="text-white font-mono">
+          {index +1} : {entry.username}
+        </span>
+        <span className="text-green-300 font-bold">{entry.score}</span>
+      </li>
+    ))}
+  </ul>
+
+
 <div className="bg-white/10 p-8 rounded-xl border border-white/20 max-w-md w-full">
   <p className="text-xl mb-2 flex items-center gap-2">
     <CheckCircle className="w-5 h-5 text-green-400" />
@@ -150,10 +220,7 @@ export default function GameScreen({onRestart}:Props) {
           もう一度プレイ
         </button>
       </motion.div>
-    );
-  }
-
-  return (
+    ): (
     <div className="flex flex-col h-screen">
       <audio ref={typeSoundRef} src="/type.mp3" preload="auto" />
       <audio ref={missSoundRef} src="/missing.mp3" preload="auto" />
