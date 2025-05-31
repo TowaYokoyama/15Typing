@@ -22,25 +22,25 @@ export default function StartScreen({ onStart }: Props) {
         onStart();
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown); //画面全体でキーが押されたことを感知するため
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onStart]);
+  }, [onStart]); //クリーンアップ関数を返す
 
   // サインアップ処理 + 表示名設定
   const handleSignUp = async () => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password); //メールアドレスとパスワードを使って新しいアカウントを作成する
+      const user = userCredential.user; //userメゾットには、作成されたユーザーの情報（uidやemail,display.name）
       if (user && username.trim()) {
-        await updateProfile(user, {
+
+        await updateProfile(user, { //作ったばかりのユーザーに表示名を設定する
           displayName: username,
         });
         console.log("ユーザー名設定:", username);
       }
 
       console.log("新規登録完了:", user.uid);
-      onStart();
+      onStart(); //本編に進む
     } catch (err: any) {
       console.error("登録エラー:", err.message);
     }

@@ -17,7 +17,7 @@ type Words = {
 export default function GameScreen({onRestart}:Props) {
   const totalTime = 60;
   const [timeLeft, setTimeLeft] = useState(totalTime);
-  const [quote, setQuote] = useState<Words | null>(null);
+  const [quote, setQuote] = useState<Words | null>(null); 
   const [userInput, setUserInput] = useState("");
   const [score, setScore] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
@@ -30,12 +30,11 @@ export default function GameScreen({onRestart}:Props) {
   const typeSoundRef = useRef<HTMLAudioElement | null>(null);
   const missSoundRef = useRef<HTMLAudioElement | null>(null);
 
-  const getRandomWord = async (): Promise<Words> => {
-    const res = await fetch("/words.json");
-    const data: Record<string, string> = await res.json();
-    const keys = Object.keys(data);
-    const randomKey = keys[Math.floor(Math.random() * keys.length)];
-
+  const getRandomWord = async (): Promise<Words> => {//自作APIから単語を習得
+    const res = await fetch("/words.json"); //静的な単語ファイルを取得
+    const data: Record<string, string> = await res.json(); //形式がjsondata
+    const keys = Object.keys(data); //stringとしてのキー値だけの配列の作成
+    const randomKey = keys[Math.floor(Math.random() * keys.length)]; //randomに作成を行う
     return {
       content: randomKey,
       author: data[randomKey],
@@ -43,8 +42,8 @@ export default function GameScreen({onRestart}:Props) {
   };
 
   useEffect(() => {
-    getRandomWord().then((words) => setQuote(words));
-  }, []);
+    getRandomWord().then((words) => setQuote(words)); //単語をランダム取得からセットしてあげる
+     }, []);
 
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -61,10 +60,10 @@ export default function GameScreen({onRestart}:Props) {
 
   useEffect(() => {
     if (!quote) return;
-    if (userInput === quote.content) {
-      setScore((prev) => prev + 10);
-      getRandomWord().then((words) => setQuote(words));
-      setUserInput("");
+    if (userInput === quote.content) { //入力が現在の単語と一緒やったら
+      setScore((prev) => prev + 10);//スコアに10点追加
+      getRandomWord().then((words) => setQuote(words)); //次のランダムな奴の取得
+      setUserInput("");//入力値をリセットぢて
     }
   }, [userInput, quote]);
 
@@ -89,9 +88,8 @@ export default function GameScreen({onRestart}:Props) {
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       if (!quote || e.isComposing || e.key === "Process") return;
       if (userInput.length >= quote.content.length) return;
-
-      const expectedChar = quote.content.charAt(userInput.length).toLowerCase();
-      const inputChar = e.key.toLowerCase();
+      const expectedChar = quote.content.charAt(userInput.length).toLowerCase(); //現在の期待される1文字
+      const inputChar = e.key.toLowerCase(); //実際に押されたキーを小文字に変換
 
       if (inputChar === expectedChar) {
         playTypeSound();
@@ -124,7 +122,7 @@ useEffect(() => {
   const saveAndFetchScores = async () => {
     try {
       // スコアを保存
-      await addDoc(collection(db, "scores"), {
+      await addDoc(collection(db, "scores"), { //FireScoreのスコアズコレクションにデータを保存
         username: username ,
         score: finalScore,
         accuracy,
